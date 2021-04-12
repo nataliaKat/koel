@@ -39,11 +39,39 @@ class MediaMetadataService
         string $destination = '',
         bool $cleanUp = true
     ): void {
+        $destination = $this->writeBinaryCover($album, $binaryData, $extension, $destination);
+        $this->updateAlbumCover($album, $destination, $cleanUp);
+    }
+
+    /**
+     * Write an album cover image file with binary data.
+     *
+     * @param string $extension The extension of the file.
+     * @return string $destination The destination of the generated file.
+     */
+    private function writeBinaryCover(
+        Album $album,
+        string $binaryData,
+        string $extension,
+        string $destination
+    ): string {
         try {
             $extension = trim(strtolower($extension), '. ');
             $destination = $destination ?: $this->generateAlbumCoverPath($extension);
             $this->imageWriter->writeFromBinaryData($destination, $binaryData);
+        } catch (Throwable $e) {
+            $this->logger->error($e);
+        }
 
+        return $destination;
+    }
+
+    /**
+     * Update the album with the new cover attribute.
+     */
+    private function updateAlbumCover(Album $album, string $destination, bool $cleanUp): void
+    {
+        try {
             if ($cleanUp) {
                 $this->deleteAlbumCoverFiles($album);
             }
